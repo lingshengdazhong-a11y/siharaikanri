@@ -1,86 +1,43 @@
 
-/* スマホ向けレイアウト調整 */
-.wrap {
+/* 支払い追加モーダルの入力欄の重なりを防止 */
+.modal input,
+.modal select,
+.modal textarea {
+  position: relative;
+  display: block;
   width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 12px;
-}
-
-.panel {
-  min-width: 0;
   max-width: 100%;
-}
-
-.month {
-  gap: 8px;
   min-width: 0;
-}
-
-.month button {
-  flex: 0 0 42px;
-}
-
-.month input {
-  flex: 1 1 auto;
-  width: 100%;
-  min-width: 0;
-}
-
-.summary {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-#list {
-  min-width: 0;
-  max-width: 100%;
-}
-
-button,
-input,
-select,
-textarea {
+  margin: 6px 0 12px;
   box-sizing: border-box;
-  max-width: 100%;
+}
+
+.modal label {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.modal .field {
+  min-width: 0;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.modal .form-grid,
+.modal .form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
 }
 
 @media (max-width: 480px) {
-  .wrap {
-    padding: 10px;
-  }
-
-  .top {
-    gap: 10px;
-    margin: 6px 0 16px;
-  }
-
-  .top h1 {
-    font-size: 18px;
-  }
-
-  .panel {
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 14px;
-  }
-
-  .month input {
-    font-size: 15px;
-  }
-
-  .summary {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  input,
-  select,
-  textarea {
-    font-size: 16px;
-  }
-
-  button {
-    overflow-wrap: anywhere;
+  .modal {
+    width: calc(100% - 24px);
+    max-width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-sizing: border-box;
   }
 }
