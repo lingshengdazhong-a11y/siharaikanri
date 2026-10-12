@@ -37,6 +37,7 @@
       if (!raw) return;
 
       const parsed = JSON.parse(raw);
+
       if (parsed && parsed.data && typeof parsed.data === 'object') {
         state.data = parsed.data;
       }
@@ -58,10 +59,6 @@
     }
   }
 
-  function getMonthItems(month = state.month) {
-    return Array.isArray(state.data[month]) ? state.data[month] : [];
-  }
-
   function makeId() {
     return typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -80,6 +77,8 @@
 
   function showToast(message) {
     const el = $('toast');
+    if (!el) return;
+
     el.textContent = message;
     el.classList.add('show');
 
@@ -93,6 +92,97 @@
     if (!date) return '';
     const [, m, d] = date.split('-');
     return `${Number(m)}/${Number(d)}`;
+  }
+
+  function addOneMonth(month) {
+    const [year, number] = month.split('-').map(Number);
+    const date = new Date(year, number, 1);
+
+    return `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(2, '0')}`;
+  }
+
+  function shiftDueDate(dueDate, targetMonth) {
+    if (!dueDate) return '';
+
+    const day = Number(dueDate.slice(8, 10));
+    const [year, month] = targetMonth.split('-').map(Number);
+    const lastDay = new Date(year, month, 0).getDate();
+
+    return `${targetMonth}-${String(
+      Math.min(day, lastDay)
+    ).padStart(2, '0')}`;
+  }
+
+  function getRecurringId(item) {
+    return item.recurringId || item.id;
+  }
+
+  function ensureMonthlyItemsThrough(targetMonth) {
+    const months = Object.keys(state.data)
+      .filter(month =>
+        /^\d{4}-\d{2}$/.test(month) &&
+        month <= targetMonth &&
+        Array.isArray(state.data[month])
+      )
+      .sort();
+
+    if (!months.length) return;
+
+    // 既存データの中で最も早い月から対象月まで順に処理する。
+    let month = months[0];
+    let changed = false;
+
+    while (month < targetMonth) {
+      const nextMonth = addOneMonth(month);
+      const sourceItems = state.data[month] || [];
+      const nextItems = state.data[nextMonth] || [];
+
+      const existingRecurringIds = new Set(
+        nextItems
+          .filter(item => item.repeat === 'monthly')
+          .map(getRecurringId)
+      );
+
+      const additions = [];
+
+      for (const item of sourceItems) {
+        if (item.repeat !== 'monthly') continue;
+
+        const recurringId = getRecurringId(item);
+
+        if (existingRecurringIds.has(recurringId)) continue;
+
+        additions.push({
+          ...item,
+          id: makeId(),
+          recurringId,
+          dueDate: shiftDueDate(item.dueDate, nextMonth),
+          paid: false,
+          repeat: 'monthly'
+        });
+
+        existingRecurringIds.add(recurringId);
+      }
+
+      if (additions.length) {
+        state.data[nextMonth] = [...nextItems, ...additions];
+        changed = true;
+      }
+
+      month = nextMonth;
+    }
+
+    if (changed) save();
+  }
+
+  function getMonthItems(month = state.month) {
+    ensureMonthlyItemsThrough(month);
+
+    return Array.isArray(state.data[month])
+      ? state.data[month]
+      : [];
   }
 
   function render() {
@@ -117,7 +207,10 @@
     $('itemCount').textContent = `${items.length}件の支払い`;
 
     document.querySelectorAll('.filter').forEach(button => {
-      button.classList.toggle('active', button.dataset.filter === state.filter);
+      button.classList.toggle(
+        'active',
+        button.dataset.filter === state.filter
+      );
     });
 
     const filtered = items.filter(p =>
@@ -227,12 +320,7 @@
 
       <label class="field">
         支払い項目名
-        <input
-          data-field="name"
-          maxlength="60"
-          placeholder="例：家賃"
-          required
-        >
+        <input data-field="name" maxlength="60" placeholder="例：家賃" required>
       </label>
 
       <div class="bulk-row-grid">
@@ -280,12 +368,7 @@
 
       <label class="field">
         メモ（任意）
-        <textarea
-          data-field="memo"
-          rows="2"
-          maxlength="300"
-          placeholder="引き落とし口座など"
-        ></textarea>
+        <textarea data-field="memo" rows="2" maxlength="300" placeholder="引き落とし口座など"></textarea>
       </label>
     `;
 
@@ -378,13 +461,17 @@
         return;
       }
 
+      const id = makeId();
+      const repeat = row.querySelector('[data-field="repeat"]').value;
+
       newItems.push({
-        id: makeId(),
+        id,
+        recurringId: repeat === 'monthly' ? id : '',
         name,
         amount: Math.floor(amount),
         category: row.querySelector('[data-field="category"]').value,
         dueDate: row.querySelector('[data-field="dueDate"]').value,
-        repeat: row.querySelector('[data-field="repeat"]').value,
+        repeat,
         paid: row.querySelector('[data-field="paid"]').checked,
         memo: row.querySelector('[data-field="memo"]').value.trim()
       });
@@ -404,6 +491,11 @@
       }
 
       newItems[0].id = id;
+      newItems[0].recurringId =
+        newItems[0].repeat === 'monthly'
+          ? (items[index].recurringId || items[index].id)
+          : '';
+
       items[index] = newItems[0];
     } else {
       items.push(...newItems);
@@ -494,6 +586,7 @@
             )
             .map(item => ({
               id: String(item.id || makeId()),
+              recurringId: String(item.recurringId || ''),
               name: item.name.slice(0, 60),
               amount: Math.floor(Number(item.amount)),
               category: categories.includes(item.category)
