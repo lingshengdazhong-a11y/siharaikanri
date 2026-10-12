@@ -1,18 +1,5 @@
 
-/* レイアウト調整：スマートフォン対応 */
-* {
-  box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  width: 100%;
-  overflow-x: hidden;
-}
-
+/* スマホ向けレイアウト調整 */
 .wrap {
   width: 100%;
   max-width: 720px;
@@ -25,24 +12,37 @@ body {
   max-width: 100%;
 }
 
-input,
-select,
-textarea,
-button {
-  max-width: 100%;
+.month {
+  gap: 8px;
   min-width: 0;
-  font: inherit;
 }
 
+.month button {
+  flex: 0 0 42px;
+}
+
+.month input {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#list {
+  min-width: 0;
+  max-width: 100%;
+}
+
+button,
 input,
 select,
 textarea {
-  width: 100%;
-}
-
-button {
-  cursor: pointer;
-  overflow-wrap: anywhere;
+  box-sizing: border-box;
+  max-width: 100%;
 }
 
 @media (max-width: 480px) {
@@ -52,7 +52,7 @@ button {
 
   .top {
     gap: 10px;
-    margin-bottom: 16px;
+    margin: 6px 0 16px;
   }
 
   .top h1 {
@@ -61,31 +61,26 @@ button {
 
   .panel {
     padding: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     border-radius: 14px;
   }
 
-  /* 日付・金額などの入力欄が横にはみ出すのを防ぐ */
+  .month input {
+    font-size: 15px;
+  }
+
+  .summary {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
   input,
   select,
   textarea {
     font-size: 16px;
   }
 
-  /* 長い項目名やメモを折り返す */
-  .panel,
-  .panel * {
-    overflow-wrap: anywhere;
-  }
-
-  /* 一覧の横幅を画面内に収める */
-  #list {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  /* 操作ボタンを画面幅に合わせる */
   button {
-    white-space: normal;
+    overflow-wrap: anywhere;
   }
 }
