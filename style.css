@@ -947,3 +947,61 @@ dialog form {
 
   }
 }
+
+
+
+/* 支払日の入力欄のはみ出し修正 */
+
+.bulk-payment-row .field {
+
+  min-width: 0;
+
+  width: 100%;
+
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+}
+
+.bulk-payment-row input[type="date"],
+
+.bulk-payment-row input[type="datetime-local"],
+
+.bulk-payment-row input[type="month"],
+
+.bulk-payment-row input[type="number"],
+
+.bulk-payment-row input[type="text"],
+
+.bulk-payment-row select {
+
+  display: block;
+
+  width: 100%;
+
+  min-width: 0;
+
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+}
+
+/* 入力欄の親要素も幅を制限 */
+
+.bulk-row-grid,
+
+.bulk-payment-row,
+
+#bulkPaymentRows {
+
+  min-width: 0;
+
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+}
+
+@media (max-w
