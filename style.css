@@ -1004,4 +1004,12 @@ dialog form {
 
 }
 
-@media (max-w
+@media (max-width: 480px) {
+
+  .bulk-row-grid {
+
+    grid-template-columns: minmax(0, 1fr);
+
+  }
+
+}
