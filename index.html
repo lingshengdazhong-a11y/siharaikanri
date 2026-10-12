@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#173f35">
+<meta name="description" content="毎月の支払いを簡単に管理できるアプリ">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<title>月々の支払い管理</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand-icon" aria-hidden="true">￥</div>
+  <div class="brand"><h1>支払い管理</h1><p>毎月のお金を、ひと目で管理。</p></div>
+  <button id="settingsBtn" class="icon-btn" aria-label="設定" title="設定">⚙</button>
+</header>
+<main>
+  <section class="month-nav panel">
+    <button id="prevMonth" class="arrow-btn" aria-label="前の月">‹</button>
+    <label class="month-label" for="monthPicker"><span>管理する月</span><input id="monthPicker" type="month"></label>
+    <button id="nextMonth" class="arrow-btn" aria-label="次の月">›</button>
+  </section>
+  <section class="summary">
+    <div class="summary-main">
+      <div class="eyebrow">今月の支払い予定</div>
+      <div id="totalAmount" class="big-amount">¥0</div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <div class="progress-label"><span>支払い完了率</span><strong id="progressText">0%</strong></div>
+    </div>
+    <div class="summary-grid">
+      <div><span class="dot paid-dot"></span><span class="summary-caption">支払い済み</span><strong id="paidAmount">¥0</strong></div>
+      <div><span class="dot unpaid-dot"></span><span class="summary-caption">未払い残額</span><strong id="unpaidAmount">¥0</strong></div>
+    </div>
+  </section>
+  <section class="section-head">
+    <div><h2>支払い一覧</h2><p id="itemCount">0件の支払い</p></div>
+    <button id="addBtn" class="primary-btn"><span>＋</span> 項目を追加</button>
+  </section>
+  <section class="filters" aria-label="支払いの絞り込み">
+    <button class="filter active" data-filter="all">すべて <span id="allCount">0</span></button>
+    <button class="filter" data-filter="unpaid">未払い <span id="unpaidCount">0</span></button>
+    <button class="filter" data-filter="paid">支払い済み <span id="paidCount">0</span></button>
+  </section>
+  <section id="paymentList" class="payment-list"></section>
+  <section id="emptyState" class="empty panel hidden">
+    <div class="empty-icon">▤</div><h3>支払いがまだありません</h3>
+    <p>家賃やスマホ代など、毎月の支払いを登録しましょう。</p>
+    <button id="emptyAddBtn" class="primary-btn">＋ 最初の項目を追加</button>
+  </section>
+  <section class="storage-note"><span>🔒</span><p><strong>データはこの端末に保存されます。</strong><br>同じブラウザで開けば、アプリを閉じても内容は残ります。</p></section>
+</main>
+<nav class="bottom-nav"><span class="nav-active">▦ <small>支払い管理</small></span><button id="exportBtn">⇧ <small>バックアップ</small></button><button id="importBtn">⇩ <small>復元</small></button><input type="file" id="importFile" accept="application/json,.json" hidden></nav>
+<dialog id="paymentDialog">
+  <form id="paymentForm" method="dialog">
+    <div class="dialog-head"><div><p class="eyebrow">PAYMENT</p><h2 id="dialogTitle">支払いを追加</h2></div><button type="button" class="icon-btn" id="closeDialog" aria-label="閉じる">✕</button></div>
+    <input type="hidden" id="paymentId">
+    <label class="field">支払い項目 <input id="paymentName" maxlength="60" placeholder="例：家賃" required></label>
+    <div class="field-row">
+      <label class="field">金額（円）<input id="paymentAmount" type="number" min="1" max="999999999" step="1" inputmode="numeric" placeholder="75000" required></label>
+      <label class="field">カテゴリー<select id="paymentCategory"><option>住居費</option><option>光熱費</option><option>通信費</option><option>保険</option><option>交通費</option><option>サブスク</option><option>食費</option><option>その他</option></select></label>
+    </div>
+    <div class="field-row">
+      <label class="field">支払日<input id="paymentDue" type="date"></label>
+      <label class="field">繰り返し<select id="paymentRepeat"><option value="monthly">毎月</option><option value="once">この月のみ</option></select></label>
+    </div>
+    <label class="check-row"><input id="paymentPaid" type="checkbox"> この支払いは支払い済み</label>
+    <label class="field">メモ（任意）<textarea id="paymentMemo" rows="2" maxlength="300" placeholder="引き落とし口座など"></textarea></label>
+    <p id="formError" class="form-error" role="alert"></p>
+    <div class="dialog-actions"><button type="button" class="secondary-btn" id="cancelDialog">キャンセル</button><button type="submit" class="primary-btn">保存する</button></div>
+  </form>
+</dialog>
+<dialog id="settingsDialog">
+  <div class="dialog-head"><div><p class="eyebrow">SETTINGS</p><h2>設定</h2></div><button class="icon-btn" id="closeSettings" aria-label="閉じる">✕</button></div>
+  <p class="settings-description">支払いデータはこの端末のブラウザ内に保存されます。ブラウザのデータ消去や端末変更に備えて、定期的にバックアップしてください。</p>
+  <button id="settingsExport" class="secondary-btn full-btn">データをバックアップ（JSON）</button>
+  <button id="settingsImport" class="secondary-btn full-btn">バックアップから復元</button>
+  <button id="clearDataBtn" class="danger-btn full-btn">すべてのデータを削除</button>
+</dialog>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<footer>月々の支払い管理 · 個人用</footer>
+<script src="app.js"></script>
+</body>
+</html>
