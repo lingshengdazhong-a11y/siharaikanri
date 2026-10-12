@@ -1,43 +1,100 @@
+:root {
+  --g: #173f35;
+  --bg: #f5f7f5;
+  --line: #e3e9e4;
+  --muted: #77817b;
+}
 
-/* 支払い追加モーダルの入力欄の重なりを防止 */
-.modal input,
-.modal select,
-.modal textarea {
-  position: relative;
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  margin: 6px 0 12px;
+* {
   box-sizing: border-box;
 }
 
-.modal label {
-  display: block;
-  width: 100%;
-  margin-bottom: 6px;
+body {
+  margin: 0;
+  background: var(--bg);
+  color: #17221d;
+  font: 14px -apple-system, BlinkMacSystemFont,
+    "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  padding-bottom: 35px;
 }
 
-.modal .field {
-  min-width: 0;
-  width: 100%;
+.wrap {
+  max-width: 720px;
+  margin: auto;
+  padding: 18px;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 22px;
+}
+
+.logo {
+  background: var(--g);
+  color: white;
+  border-radius: 14px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.top h1 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.top p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.panel {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  padding: 16px;
   margin-bottom: 14px;
 }
 
-.modal .form-grid,
-.modal .form-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
-  width: 100%;
+.month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-@media (max-width: 480px) {
-  .modal {
-    width: calc(100% - 24px);
-    max-width: 100%;
-    max-height: 85vh;
-    overflow-y: auto;
-    box-sizing: border-box;
-  }
+.month button {
+  border: 0;
+  border-radius: 10px;
+  background: #edf3ee;
+  color: var(--g);
+  font-size: 25px;
+  width: 42px;
+  height: 42px;
+}
+
+.month input {
+  border: 0;
+  background: transparent;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: center;
+  min-width: 150px;
+}
+
+.summary {
+  background: var(--g);
+  color: white;
+  border-radius: 20px;
+  padding: 23px;
+  margin-bottom: 24px;
+}
+
+.label {
+  color: var(--muted);
 }
