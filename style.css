@@ -922,4 +922,28 @@ dialog form {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+  
+    .bulk-row-grid {
+
+    grid-template-columns: minmax(0, 1fr);
+
+    gap: 0;
+
+  }
+
+  .bulk-payment-row {
+
+    padding: 10px;
+
+  }
+
+  .bulk-payment-row input:not([type="checkbox"]),
+
+  .bulk-payment-row select,
+
+  .bulk-payment-row textarea {
+
+    font-size: 16px;
+
+  }
 }
