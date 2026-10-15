@@ -1,4 +1,3 @@
-
 (() => {
   'use strict';
 
@@ -31,6 +30,23 @@
     editing: false
   };
 
+  // 円グラフの色
+  const breakdownColors = [
+    '#34735c',
+    '#e6a23c',
+    '#5486c5',
+    '#c96b6b',
+    '#8b70bd',
+    '#45a6a0',
+    '#d18bb5',
+    '#8a9690',
+    '#c1a45b',
+    '#6e91a8',
+    '#a2bd78',
+    '#d58b5b'
+  ];
+
+  // 保存データの読み込み
   function load() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -46,6 +62,7 @@
     }
   }
 
+  // 保存
   function save() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -65,6 +82,7 @@
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
+  // HTMLに文字を安全に表示する
   function esc(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({
       '&': '&amp;',
@@ -75,6 +93,7 @@
     }[c]));
   }
 
+  // 画面下部の通知
   function showToast(message) {
     const el = $('toast');
     if (!el) return;
@@ -103,6 +122,7 @@
     ).padStart(2, '0')}`;
   }
 
+  // 翌月の日付を調整する
   function shiftDueDate(dueDate, targetMonth) {
     if (!dueDate) return '';
 
@@ -119,6 +139,7 @@
     return item.recurringId || item.id;
   }
 
+  // 毎月繰り返す支払いを対象月まで作成する
   function ensureMonthlyItemsThrough(targetMonth) {
     const months = Object.keys(state.data)
       .filter(month =>
@@ -130,7 +151,6 @@
 
     if (!months.length) return;
 
-    // 既存データの中で最も早い月から対象月まで順に処理する。
     let month = months[0];
     let changed = false;
 
@@ -185,13 +205,105 @@
       : [];
   }
 
+  // 円グラフを描画する
+  function renderBreakdown(items, total) {
+    const content = $('breakdownContent');
+    const chart = $('breakdownChart');
+    const legend = $('breakdownLegend');
+    const empty = $('breakdownEmpty');
+
+    if (!content || !chart || !legend || !empty) return;
+
+    // 支払いがない場合
+    if (!items.length || total <= 0) {
+      content.hidden = true;
+      empty.hidden = false;
+      chart.style.background = '';
+      legend.innerHTML = '';
+      return;
+    }
+
+    content.hidden = false;
+    empty.hidden = true;
+
+    // 金額の大きい順に並べる
+    const sortedItems = [...items].sort(
+      (a, b) => Number(b.amount || 0) - Number(a.amount || 0)
+    );
+
+    let currentPercent = 0;
+
+    const slices = sortedItems
+      .map((item, index) => {
+        const amount = Math.max(0, Number(item.amount) || 0);
+
+        if (amount <= 0) return null;
+
+        const start = currentPercent;
+        currentPercent += amount / total * 100;
+
+        return {
+          item,
+          amount,
+          start,
+          end: currentPercent,
+          color: breakdownColors[index % breakdownColors.length]
+        };
+      })
+      .filter(Boolean);
+
+    // 各項目の割合に応じて円グラフの区間を作成
+    const gradient = slices.map(slice =>
+      `${slice.color} ${slice.start}% ${slice.end}%`
+    ).join(', ');
+
+    chart.style.background = `conic-gradient(${gradient})`;
+
+    chart.setAttribute(
+      'aria-label',
+      `支払い予定総額${yen(total)}を100％とした円グラフ`
+    );
+
+    // 円グラフの横または下に項目・金額・割合を表示
+    legend.innerHTML = slices.map(slice => {
+      const percentage = slice.amount / total * 100;
+
+      return `
+        <li class="breakdown-item">
+          <span
+            class="breakdown-color"
+            style="background:${slice.color}"
+            aria-hidden="true"
+          ></span>
+
+          <span class="breakdown-name">
+            <strong>${esc(slice.item.name)}</strong>
+            <small>${esc(slice.item.category || 'その他')}</small>
+          </span>
+
+          <span class="breakdown-values">
+            <strong>${yen(slice.amount)}</strong>
+            <small>${percentage.toFixed(1)}%</small>
+          </span>
+        </li>
+      `;
+    }).join('');
+  }
+
+  // メイン画面を更新する
   function render() {
     $('monthPicker').value = state.month;
 
     const items = getMonthItems();
-    const total = items.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+    const total = items.reduce(
+      (sum, p) => sum + Number(p.amount || 0),
+      0
+    );
+
     const paid = items.filter(p => p.paid)
       .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
     const unpaid = total - paid;
     const rate = total ? Math.round(paid / total * 100) : 0;
 
@@ -200,6 +312,9 @@
     $('unpaidAmount').textContent = yen(unpaid);
     $('progressText').textContent = `${rate}%`;
     $('progressBar').style.width = `${rate}%`;
+
+    // 円グラフを更新
+    renderBreakdown(items, total);
 
     $('allCount').textContent = items.length;
     $('paidCount').textContent = items.filter(p => p.paid).length;
@@ -223,6 +338,7 @@
       const [year, month] = state.month.split('-').map(Number);
       const lastDay = new Date(year, month, 0).getDate();
       const monthEnd = `${state.month}-${String(lastDay).padStart(2, '0')}`;
+
       const late = !p.paid && p.dueDate &&
         p.dueDate < monthEnd &&
         monthOf(p.dueDate) === state.month;
@@ -285,6 +401,7 @@
       : '＋ 最初の項目を追加';
   }
 
+  // 月を切り替える
   function moveMonth(offset) {
     const [year, month] = state.month.split('-').map(Number);
     const date = new Date(year, month - 1 + offset, 1);
@@ -304,6 +421,7 @@
     ).join('');
   }
 
+  // 支払い入力欄を追加する
   function addPaymentRow(item = {}) {
     const container = $('bulkPaymentRows');
     const row = document.createElement('div');
@@ -403,6 +521,7 @@
     });
   }
 
+  // 支払い登録・編集画面を開く
   function openForm(item = null) {
     state.editing = !!item;
 
@@ -425,6 +544,7 @@
     }, 80);
   }
 
+  // 支払いを保存する
   function submitForm(event) {
     event.preventDefault();
     $('formError').textContent = '';
@@ -517,6 +637,7 @@
     );
   }
 
+  // 月別データを保存する
   function saveWithItems(items) {
     const previous = state.data[state.month];
     state.data[state.month] = items;
@@ -532,6 +653,7 @@
     return false;
   }
 
+  // バックアップファイルを作成する
   function exportData() {
     const payload = {
       app: '月々の支払い管理',
@@ -556,6 +678,7 @@
     showToast('バックアップファイルを作成しました');
   }
 
+  // バックアップから復元する
   function importData(file) {
     if (!file) return;
 
@@ -631,6 +754,7 @@
     reader.readAsText(file);
   }
 
+  // 支払い項目を削除する
   function deleteItem(id) {
     const item = getMonthItems().find(p => p.id === id);
     if (!item) return;
@@ -647,6 +771,7 @@
     }
   }
 
+  // 月切り替え
   $('prevMonth').addEventListener('click', () => moveMonth(-1));
   $('nextMonth').addEventListener('click', () => moveMonth(1));
 
@@ -657,6 +782,7 @@
     }
   });
 
+  // 支払い登録
   $('addBtn').addEventListener('click', () => openForm());
   $('emptyAddBtn').addEventListener('click', () => openForm());
 
@@ -683,6 +809,7 @@
 
   $('paymentForm').addEventListener('submit', submitForm);
 
+  // 支払い一覧の絞り込み
   document.querySelectorAll('.filter').forEach(button => {
     button.addEventListener('click', () => {
       state.filter = button.dataset.filter;
@@ -690,6 +817,7 @@
     });
   });
 
+  // 支払い済み・未払いの切り替え
   $('paymentList').addEventListener('change', event => {
     const target = event.target;
 
@@ -711,6 +839,7 @@
     }
   });
 
+  // 支払いの編集・削除
   $('paymentList').addEventListener('click', event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -727,6 +856,7 @@
     }
   });
 
+  // バックアップ・復元
   $('exportBtn').addEventListener('click', exportData);
 
   $('settingsExport').addEventListener('click', () => {
@@ -743,6 +873,7 @@
     importData(event.target.files[0]);
   });
 
+  // 設定画面
   $('settingsBtn').addEventListener('click', () => {
     $('settingsDialog').showModal();
   });
@@ -751,6 +882,7 @@
     $('settingsDialog').close();
   });
 
+  // 全データ削除
   $('clearDataBtn').addEventListener('click', () => {
     if (!confirm(
       'すべての月の支払いデータを完全に削除します。この操作は元に戻せません。先にバックアップしますか？'
@@ -773,9 +905,11 @@
     showToast('すべてのデータを削除しました');
   });
 
+  // 初期表示
   load();
   render();
 
+  // オフライン対応のサービスワーカー
   if (
     'serviceWorker' in navigator &&
     location.protocol.startsWith('http')
