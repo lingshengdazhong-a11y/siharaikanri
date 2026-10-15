@@ -1,3 +1,4 @@
+
 :root {
   --green: #173f35;
   --green-light: #e7f2eb;
@@ -134,6 +135,10 @@ main {
   border-radius: 18px;
   background: var(--surface);
   box-shadow: var(--shadow);
+}
+
+.view-panel.hidden {
+  display: none !important;
 }
 
 .month-nav {
@@ -282,7 +287,7 @@ main {
   background: #f0c68d;
 }
 
-/* 支払い割合の円グラフ */
+/* 支払い割合画面 */
 
 .breakdown {
   margin-top: 16px;
@@ -290,6 +295,10 @@ main {
 }
 
 .breakdown-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 18px;
 }
 
@@ -304,22 +313,77 @@ main {
   font-size: 12px;
 }
 
+#breakdownTotal {
+  flex-shrink: 0;
+  color: var(--green);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+/* 円グラフと一覧 */
+
 .breakdown-content {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 24px;
 }
 
-.breakdown-chart {
+.breakdown-chart-wrap {
   width: 100%;
-  max-width: 220px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.breakdown-chart {
+  position: relative;
+  width: 100%;
   aspect-ratio: 1;
   margin: 0 auto;
+  overflow: hidden;
   border-radius: 50%;
   background: #e8ece9;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
+
+/* 円グラフ内の項目名と割合 */
+
+.breakdown-label {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 27%;
+  min-height: 24px;
+  padding: 2px;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  font-size: clamp(8px, 2.4vw, 12px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  overflow-wrap: anywhere;
+  pointer-events: none;
+}
+
+.breakdown-label-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.breakdown-label-percent {
+  display: block;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* 項目一覧 */
 
 .breakdown-legend {
   display: grid;
@@ -685,15 +749,17 @@ main {
   backdrop-filter: blur(12px);
 }
 
-.bottom-nav button,
-.bottom-nav > span {
+.bottom-nav button {
   display: flex;
   flex: 1;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 1px;
+  min-width: 0;
   padding: 3px;
   border: 0;
+  border-radius: 8px;
   color: var(--muted);
   background: transparent;
   font-size: 20px;
@@ -703,9 +769,13 @@ main {
   font-size: 10px;
 }
 
-.bottom-nav .nav-active {
+.bottom-nav button.nav-active {
   color: var(--green);
   font-weight: 750;
+}
+
+.bottom-nav button:focus-visible {
+  outline-offset: -2px;
 }
 
 footer {
@@ -1020,12 +1090,25 @@ dialog form {
     gap: 20px;
   }
 
-  .breakdown-chart {
-    width: min(68vw, 220px);
+  .breakdown-chart-wrap {
+    width: min(76vw, 320px);
   }
 
   .breakdown-legend {
     gap: 11px;
+  }
+
+  .breakdown-label {
+    font-size: clamp(8px, 2.5vw, 11px);
+  }
+
+  .bottom-nav {
+    padding-right: 6px;
+    padding-left: 6px;
+  }
+
+  .bottom-nav small {
+    font-size: 9px;
   }
 
   dialog {
