@@ -1,3 +1,4 @@
+
 (() => {
   'use strict';
 
@@ -43,7 +44,11 @@
     '#c1a45b',
     '#6e91a8',
     '#a2bd78',
-    '#d58b5b'
+    '#d58b5b',
+    '#6f65a8',
+    '#bd6574',
+    '#3b7d9a',
+    '#7b8c42'
   ];
 
   // 保存データの読み込み
@@ -205,20 +210,41 @@
       : [];
   }
 
-  // 円グラフを描画する
+  // ===== 支払い項目の割合・円グラフ =====
   function renderBreakdown(items, total) {
     const content = $('breakdownContent');
     const chart = $('breakdownChart');
     const legend = $('breakdownLegend');
     const empty = $('breakdownEmpty');
+    const totalLabel = $('breakdownTotal');
 
-    if (!content || !chart || !legend || !empty) return;
+    if (!content || !chart || !legend || !empty || !totalLabel) {
+      return;
+    }
 
-    // 支払いがない場合
-    if (!items.length || total <= 0) {
+    totalLabel.textContent = `合計 ${yen(total)}`;
+
+    // 金額が正の項目だけを割合計算に使用する
+    const validItems = items
+      .map(item => ({
+        ...item,
+        numericAmount: Math.max(0, Number(item.amount) || 0)
+      }))
+      .filter(item => item.numericAmount > 0)
+      .sort((a, b) => b.numericAmount - a.numericAmount);
+
+    // 円グラフの分母は支払い予定総額
+    const validTotal = validItems.reduce(
+      (sum, item) => sum + item.numericAmount,
+      0
+    );
+
+    if (!validItems.length || validTotal <= 0) {
       content.hidden = true;
       empty.hidden = false;
       chart.style.background = '';
+      chart.innerHTML = '';
+      chart.setAttribute('aria-label', '支払い項目はありません');
       legend.innerHTML = '';
       return;
     }
@@ -226,68 +252,113 @@
     content.hidden = false;
     empty.hidden = true;
 
-    // 金額の大きい順に並べる
-    const sortedItems = [...items].sort(
-      (a, b) => Number(b.amount || 0) - Number(a.amount || 0)
-    );
-
     let currentPercent = 0;
+    const gradientParts = [];
+    const chartLabels = [];
+    const legendParts = [];
 
-    const slices = sortedItems
-      .map((item, index) => {
-        const amount = Math.max(0, Number(item.amount) || 0);
+    chart.innerHTML = '';
 
-        if (amount <= 0) return null;
+    validItems.forEach((item, index) => {
+      const amount = item.numericAmount;
+      const percentage = amount / validTotal * 100;
+      const color = breakdownColors[index % breakdownColors.length];
 
-        const start = currentPercent;
-        currentPercent += amount / total * 100;
+      const start = currentPercent;
+      currentPercent += percentage;
 
-        return {
-          item,
-          amount,
-          start,
-          end: currentPercent,
-          color: breakdownColors[index % breakdownColors.length]
-        };
-      })
-      .filter(Boolean);
+      gradientParts.push(
+        `${color} ${start}% ${currentPercent}%`
+      );
 
-    // 各項目の割合に応じて円グラフの区間を作成
-    const gradient = slices.map(slice =>
-      `${slice.color} ${slice.start}% ${slice.end}%`
-    ).join(', ');
+      // 円グラフ内に項目名と割合を表示
+      // 小さい扇形は文字が重なりやすいため、4%以上の項目に表示
+      if (percentage >= 4) {
+        const middlePercent = start + percentage / 2;
+        const angle = middlePercent / 100 * 2 * Math.PI - Math.PI / 2;
 
-    chart.style.background = `conic-gradient(${gradient})`;
+        // 中心を避けて、扇形の中ほどに配置
+        const radius = 35;
+        const x = 50 + radius * Math.cos(angle);
+        const y = 50 + radius * Math.sin(angle);
+
+        const label = document.createElement('div');
+        label.className = 'breakdown-label';
+        label.style.left = `${x}%`;
+        label.style.top = `${y}%`;
+
+        const name = document.createElement('span');
+        name.className = 'breakdown-label-name';
+        name.textContent = item.name || '名称未設定';
+
+        const percent = document.createElement('span');
+        percent.className = 'breakdown-label-percent';
+        percent.textContent = `${percentage.toFixed(1)}%`;
+
+        label.appendChild(name);
+        label.appendChild(percent);
+        chartLabels.push(label);
+      }
+
+      // 円グラフ下の項目一覧を作成
+      const row = document.createElement('li');
+      row.className = 'breakdown-item';
+
+      const colorBox = document.createElement('span');
+      colorBox.className = 'breakdown-color';
+      colorBox.style.backgroundColor = color;
+      colorBox.setAttribute('aria-hidden', 'true');
+
+      const nameContainer = document.createElement('span');
+      nameContainer.className = 'breakdown-name';
+
+      const nameText = document.createElement('strong');
+      nameText.textContent = item.name || '名称未設定';
+
+      const categoryText = document.createElement('small');
+      categoryText.textContent = item.category || 'その他';
+
+      nameContainer.appendChild(nameText);
+      nameContainer.appendChild(categoryText);
+
+      const values = document.createElement('span');
+      values.className = 'breakdown-values';
+
+      const amountText = document.createElement('strong');
+      amountText.textContent = yen(amount);
+
+      const percentageText = document.createElement('small');
+      percentageText.textContent = `${percentage.toFixed(1)}%`;
+
+      values.appendChild(amountText);
+      values.appendChild(percentageText);
+
+      row.appendChild(colorBox);
+      row.appendChild(nameContainer);
+      row.appendChild(values);
+
+      legendParts.push(row);
+    });
+
+    // 円グラフを描画
+    chart.style.background =
+      `conic-gradient(${gradientParts.join(', ')})`;
+
+    chartLabels.forEach(label => {
+      chart.appendChild(label);
+    });
 
     chart.setAttribute(
       'aria-label',
-      `支払い予定総額${yen(total)}を100％とした円グラフ`
+      `支払い予定総額${yen(validTotal)}を100％とした円グラフ。` +
+      validItems.map(item => {
+        const percentage = item.numericAmount / validTotal * 100;
+        return `${item.name || '名称未設定'} ${percentage.toFixed(1)}%`;
+      }).join('、')
     );
 
-    // 円グラフの横または下に項目・金額・割合を表示
-    legend.innerHTML = slices.map(slice => {
-      const percentage = slice.amount / total * 100;
-
-      return `
-        <li class="breakdown-item">
-          <span
-            class="breakdown-color"
-            style="background:${slice.color}"
-            aria-hidden="true"
-          ></span>
-
-          <span class="breakdown-name">
-            <strong>${esc(slice.item.name)}</strong>
-            <small>${esc(slice.item.category || 'その他')}</small>
-          </span>
-
-          <span class="breakdown-values">
-            <strong>${yen(slice.amount)}</strong>
-            <small>${percentage.toFixed(1)}%</small>
-          </span>
-        </li>
-      `;
-    }).join('');
+    // 一覧を更新
+    legend.replaceChildren(...legendParts);
   }
 
   // メイン画面を更新する
@@ -313,7 +384,8 @@
     $('progressText').textContent = `${rate}%`;
     $('progressBar').style.width = `${rate}%`;
 
-    // 円グラフを更新
+    // 割合画面の円グラフを更新
+    // 支払い済み・未払いに関係なく、その月の全項目を使用する
     renderBreakdown(items, total);
 
     $('allCount').textContent = items.length;
@@ -337,7 +409,8 @@
     $('paymentList').innerHTML = filtered.map(p => {
       const [year, month] = state.month.split('-').map(Number);
       const lastDay = new Date(year, month, 0).getDate();
-      const monthEnd = `${state.month}-${String(lastDay).padStart(2, '0')}`;
+      const monthEnd =
+        `${state.month}-${String(lastDay).padStart(2, '0')}`;
 
       const late = !p.paid && p.dueDate &&
         p.dueDate < monthEnd &&
@@ -770,6 +843,34 @@
       showToast('項目を削除しました');
     }
   }
+
+  // ===== 支払い管理・割合の画面切り替え =====
+  document.querySelectorAll('.bottom-nav [data-view]').forEach(button => {
+    button.addEventListener('click', () => {
+      const view = button.dataset.view;
+      const managementView = $('managementView');
+      const breakdownView = $('breakdownView');
+
+      if (!managementView || !breakdownView) return;
+
+      const showManagement = view === 'management';
+
+      managementView.classList.toggle('hidden', !showManagement);
+      breakdownView.classList.toggle('hidden', showManagement);
+
+      document.querySelectorAll('.bottom-nav [data-view]').forEach(tab => {
+        const active = tab === button;
+
+        tab.classList.toggle('nav-active', active);
+
+        if (active) {
+          tab.setAttribute('aria-current', 'page');
+        } else {
+          tab.removeAttribute('aria-current');
+        }
+      });
+    });
+  });
 
   // 月切り替え
   $('prevMonth').addEventListener('click', () => moveMonth(-1));
