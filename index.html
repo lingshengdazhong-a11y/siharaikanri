@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -21,6 +22,7 @@
   </header>
 
   <main>
+    <!-- 管理する月の選択：両画面で共通 -->
     <section class="month-nav panel">
       <button id="prevMonth" class="arrow-btn" aria-label="前の月">‹</button>
       <label class="month-label" for="monthPicker">
@@ -30,95 +32,137 @@
       <button id="nextMonth" class="arrow-btn" aria-label="次の月">›</button>
     </section>
 
-    <section class="summary">
-      <div class="summary-main">
-        <div class="eyebrow">今月の支払い予定</div>
-        <div id="totalAmount" class="big-amount">¥0</div>
-        <div class="progress-track">
-          <div id="progressBar" class="progress-bar"></div>
+    <!-- 支払い管理画面 -->
+    <section id="managementView" class="view-panel">
+      <section class="summary">
+        <div class="summary-main">
+          <div class="eyebrow">今月の支払い予定</div>
+          <div id="totalAmount" class="big-amount">¥0</div>
+          <div class="progress-track">
+            <div id="progressBar" class="progress-bar"></div>
+          </div>
+          <div class="progress-label">
+            <span>支払い完了率</span>
+            <strong id="progressText">0%</strong>
+          </div>
         </div>
-        <div class="progress-label">
-          <span>支払い完了率</span>
-          <strong id="progressText">0%</strong>
+        <div class="summary-grid">
+          <div>
+            <span class="dot paid-dot"></span>
+            <span class="summary-caption">支払い済み</span>
+            <strong id="paidAmount">¥0</strong>
+          </div>
+          <div>
+            <span class="dot unpaid-dot"></span>
+            <span class="summary-caption">未払い残額</span>
+            <strong id="unpaidAmount">¥0</strong>
+          </div>
         </div>
-      </div>
-      <div class="summary-grid">
+      </section>
+
+      <section class="section-head">
         <div>
-          <span class="dot paid-dot"></span>
-          <span class="summary-caption">支払い済み</span>
-          <strong id="paidAmount">¥0</strong>
+          <h2>支払い一覧</h2>
+          <p id="itemCount">0件の支払い</p>
         </div>
-        <div>
-          <span class="dot unpaid-dot"></span>
-          <span class="summary-caption">未払い残額</span>
-          <strong id="unpaidAmount">¥0</strong>
+        <button id="addBtn" class="primary-btn">
+          <span>＋</span> 項目を追加
+        </button>
+      </section>
+
+      <section class="filters" aria-label="支払いの絞り込み">
+        <button class="filter active" data-filter="all">
+          すべて <span id="allCount">0</span>
+        </button>
+        <button class="filter" data-filter="unpaid">
+          未払い <span id="unpaidCount">0</span>
+        </button>
+        <button class="filter" data-filter="paid">
+          支払い済み <span id="paidCount">0</span>
+        </button>
+      </section>
+
+      <section id="paymentList" class="payment-list"></section>
+
+      <section id="emptyState" class="empty panel hidden">
+        <div class="empty-icon">▤</div>
+        <h3>支払いがまだありません</h3>
+        <p>家賃やスマホ代など、毎月の支払いを登録しましょう。</p>
+        <button id="emptyAddBtn" class="primary-btn">
+          ＋ 最初の項目を追加
+        </button>
+      </section>
+
+      <section class="storage-note">
+        <span>🔒</span>
+        <p>
+          <strong>データはこの端末に保存されます。</strong>
+          <br>同じブラウザで開けば、アプリを閉じても内容は残ります。
+        </p>
+      </section>
+    </section>
+
+    <!-- 割合画面：支払い管理とは別画面 -->
+    <section id="breakdownView" class="view-panel hidden">
+      <section class="breakdown panel" aria-labelledby="breakdownTitle">
+        <div class="breakdown-head">
+          <div>
+            <h2 id="breakdownTitle">支払い項目の割合</h2>
+            <p>支払い予定総額に占める各項目の割合</p>
+          </div>
+          <strong id="breakdownTotal">合計 ¥0</strong>
         </div>
-      </div>
-    </section>
 
-    <!-- 支払い割合の円グラフ -->
-    <section class="breakdown panel" aria-labelledby="breakdownTitle">
-      <div class="breakdown-head">
-        <div>
-          <h2 id="breakdownTitle">支払い割合</h2>
-          <p>支払い予定総額に占める各項目の割合</p>
+        <div id="breakdownContent" class="breakdown-content" hidden>
+          <div class="breakdown-chart-wrap">
+            <div
+              id="breakdownChart"
+              class="breakdown-chart"
+              role="img"
+              aria-label="支払い項目ごとの割合を示す円グラフ"
+            ></div>
+          </div>
+
+          <ul id="breakdownLegend" class="breakdown-legend"></ul>
         </div>
-      </div>
 
-      <div id="breakdownContent" class="breakdown-content" hidden>
-        <div
-          id="breakdownChart"
-          class="breakdown-chart"
-          role="img"
-          aria-label="支払い項目ごとの割合を示す円グラフ"
-        ></div>
-        <ul id="breakdownLegend" class="breakdown-legend"></ul>
-      </div>
-
-      <p id="breakdownEmpty" class="breakdown-empty">
-        支払い項目を登録すると、ここに円グラフが表示されます。
-      </p>
-    </section>
-
-    <section class="section-head">
-      <div>
-        <h2>支払い一覧</h2>
-        <p id="itemCount">0件の支払い</p>
-      </div>
-      <button id="addBtn" class="primary-btn"><span>＋</span> 項目を追加</button>
-    </section>
-
-    <section class="filters" aria-label="支払いの絞り込み">
-      <button class="filter active" data-filter="all">すべて <span id="allCount">0</span></button>
-      <button class="filter" data-filter="unpaid">未払い <span id="unpaidCount">0</span></button>
-      <button class="filter" data-filter="paid">支払い済み <span id="paidCount">0</span></button>
-    </section>
-
-    <section id="paymentList" class="payment-list"></section>
-
-    <section id="emptyState" class="empty panel hidden">
-      <div class="empty-icon">▤</div>
-      <h3>支払いがまだありません</h3>
-      <p>家賃やスマホ代など、毎月の支払いを登録しましょう。</p>
-      <button id="emptyAddBtn" class="primary-btn">＋ 最初の項目を追加</button>
-    </section>
-
-    <section class="storage-note">
-      <span>🔒</span>
-      <p>
-        <strong>データはこの端末に保存されます。</strong>
-        <br>同じブラウザで開けば、アプリを閉じても内容は残ります。
-      </p>
+        <p id="breakdownEmpty" class="breakdown-empty">
+          支払い項目を登録すると、ここに円グラフが表示されます。
+        </p>
+      </section>
     </section>
   </main>
 
-  <nav class="bottom-nav">
-    <span class="nav-active">▦ <small>支払い管理</small></span>
-    <button id="exportBtn">⇧ <small>バックアップ</small></button>
-    <button id="importBtn">⇩ <small>復元</small></button>
+  <!-- 下部ナビゲーション -->
+  <nav class="bottom-nav" aria-label="メインメニュー">
+    <button
+      type="button"
+      class="nav-active"
+      data-view="management"
+      aria-current="page"
+    >
+      ▦ <small>支払い管理</small>
+    </button>
+
+    <button
+      type="button"
+      data-view="breakdown"
+    >
+      ◔ <small>割合</small>
+    </button>
+
+    <button id="exportBtn" type="button">
+      ⇧ <small>バックアップ</small>
+    </button>
+
+    <button id="importBtn" type="button">
+      ⇩ <small>復元</small>
+    </button>
+
     <input type="file" id="importFile" accept="application/json,.json" hidden>
   </nav>
 
+  <!-- 支払い追加・編集ダイアログ -->
   <dialog id="paymentDialog">
     <form id="paymentForm">
       <div class="dialog-head">
@@ -126,14 +170,23 @@
           <p class="eyebrow">PAYMENT</p>
           <h2 id="dialogTitle">支払いを追加</h2>
         </div>
-        <button type="button" class="icon-btn" id="closeDialog" aria-label="閉じる">✕</button>
+        <button
+          type="button"
+          class="icon-btn"
+          id="closeDialog"
+          aria-label="閉じる"
+        >✕</button>
       </div>
 
       <input type="hidden" id="paymentId">
 
       <div class="bulk-item-head">
         <strong>支払い項目一覧</strong>
-        <button type="button" id="addPaymentRow" class="secondary-btn bulk-add-btn">
+        <button
+          type="button"
+          id="addPaymentRow"
+          class="secondary-btn bulk-add-btn"
+        >
           ＋ 項目を追加
         </button>
       </div>
@@ -147,30 +200,44 @@
       <p id="formError" class="form-error" role="alert"></p>
 
       <div class="dialog-actions">
-        <button type="button" class="secondary-btn" id="cancelDialog">キャンセル</button>
-        <button type="submit" id="savePaymentsBtn" class="primary-btn">まとめて保存</button>
+        <button type="button" class="secondary-btn" id="cancelDialog">
+          キャンセル
+        </button>
+        <button type="submit" id="savePaymentsBtn" class="primary-btn">
+          まとめて保存
+        </button>
       </div>
     </form>
   </dialog>
 
+  <!-- 設定ダイアログ -->
   <dialog id="settingsDialog">
     <div class="dialog-head">
       <div>
         <p class="eyebrow">SETTINGS</p>
         <h2>設定</h2>
       </div>
-      <button type="button" class="icon-btn" id="closeSettings" aria-label="閉じる">✕</button>
+      <button
+        type="button"
+        class="icon-btn"
+        id="closeSettings"
+        aria-label="閉じる"
+      >✕</button>
     </div>
+
     <p class="settings-description">
       支払いデータはこの端末のブラウザ内に保存されます。
       ブラウザのデータ消去や端末変更に備えて、定期的にバックアップしてください。
     </p>
+
     <button type="button" id="settingsExport" class="secondary-btn full-btn">
       データをバックアップ（JSON）
     </button>
+
     <button type="button" id="settingsImport" class="secondary-btn full-btn">
       バックアップから復元
     </button>
+
     <button type="button" id="clearDataBtn" class="danger-btn full-btn">
       すべてのデータを削除
     </button>
@@ -179,6 +246,7 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <footer>月々の支払い管理 · 個人用</footer>
+
   <script src="app.js"></script>
 </body>
 </html>
