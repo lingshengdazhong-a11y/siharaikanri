@@ -1,4 +1,3 @@
-
 :root {
   --green: #173f35;
   --green-light: #e7f2eb;
@@ -281,6 +280,111 @@ main {
 
 .unpaid-dot {
   background: #f0c68d;
+}
+
+/* 支払い割合の円グラフ */
+
+.breakdown {
+  margin-top: 16px;
+  padding: 20px;
+}
+
+.breakdown-head {
+  margin-bottom: 18px;
+}
+
+.breakdown-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.breakdown-head p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.breakdown-content {
+  display: grid;
+  grid-template-columns: minmax(140px, 220px) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+}
+
+.breakdown-chart {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: #e8ece9;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.breakdown-legend {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breakdown-item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.breakdown-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+
+.breakdown-name,
+.breakdown-values {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.breakdown-name strong {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.breakdown-name small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.breakdown-values {
+  align-items: flex-end;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.breakdown-values strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.breakdown-values small {
+  color: var(--green-mid);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.breakdown-empty {
+  margin: 0;
+  padding: 18px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }
 
 /* 一覧とボタン */
@@ -682,6 +786,7 @@ dialog form {
 
 .bulk-payment-row {
   min-width: 0;
+  max-width: 100%;
   margin-bottom: 14px;
   padding: 14px;
   border: 1px solid var(--border);
@@ -712,16 +817,23 @@ dialog form {
 .bulk-row-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .field {
-  display: block;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  margin-bottom: 12px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 12px;
   color: #4f5c54;
   font-size: 12px;
   font-weight: 650;
+  box-sizing: border-box;
 }
 
 .field input,
@@ -731,7 +843,8 @@ dialog form {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  margin-top: 6px;
+  height: 44px;
+  margin: 6px 0 0;
   padding: 11px 12px;
   border: 1px solid #dbe3dc;
   border-radius: 10px;
@@ -739,9 +852,18 @@ dialog form {
   background: #fff;
   font-size: 14px;
   font-weight: 400;
+  box-sizing: border-box;
+}
+
+.field input[type="date"] {
+  padding: 10px 6px;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .field textarea {
+  height: auto;
   resize: vertical;
 }
 
@@ -889,6 +1011,23 @@ dialog form {
     justify-content: flex-start;
   }
 
+  .breakdown {
+    padding: 16px;
+  }
+
+  .breakdown-content {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .breakdown-chart {
+    width: min(68vw, 220px);
+  }
+
+  .breakdown-legend {
+    gap: 11px;
+  }
+
   dialog {
     width: calc(100% - 20px);
     padding: 16px;
@@ -898,6 +1037,16 @@ dialog form {
   .bulk-row-grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 0;
+  }
+
+  .bulk-payment-row {
+    padding: 10px;
+  }
+
+  .bulk-payment-row input:not([type="checkbox"]),
+  .bulk-payment-row select,
+  .bulk-payment-row textarea {
+    font-size: 16px;
   }
 
   .dialog-actions {
@@ -915,6 +1064,12 @@ dialog form {
   }
 }
 
+@media (max-width: 420px) {
+  #paymentDialog .bulk-payment-row .bulk-row-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -922,138 +1077,4 @@ dialog form {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
-  
-    .bulk-row-grid {
-
-    grid-template-columns: minmax(0, 1fr);
-
-    gap: 0;
-
-  }
-
-  .bulk-payment-row {
-
-    padding: 10px;
-
-  }
-
-  .bulk-payment-row input:not([type="checkbox"]),
-
-  .bulk-payment-row select,
-
-  .bulk-payment-row textarea {
-
-    font-size: 16px;
-
-  }
 }
-
-
-
-/* 支払日の入力欄のはみ出し修正 */
-
-.bulk-payment-row .field {
-
-  min-width: 0;
-
-  width: 100%;
-
-  max-width: 100%;
-
-  box-sizing: border-box;
-
-}
-
-.bulk-payment-row input[type="date"],
-
-.bulk-payment-row input[type="datetime-local"],
-
-.bulk-payment-row input[type="month"],
-
-.bulk-payment-row input[type="number"],
-
-.bulk-payment-row input[type="text"],
-
-.bulk-payment-row select {
-
-  display: block;
-
-  width: 100%;
-
-  min-width: 0;
-
-  max-width: 100%;
-
-  box-sizing: border-box;
-
-}
-
-/* 入力欄の親要素も幅を制限 */
-
-.bulk-row-grid,
-
-.bulk-payment-row,
-
-#bulkPaymentRows {
-
-  min-width: 0;
-
-  max-width: 100%;
-
-  box-sizing: border-box;
-
-}
-
-@media (max-width: 480px) {
-
-  .bulk-row-grid {
-
-    grid-template-columns: minmax(0, 1fr);
-
-  }
-}
-
-
-/* 項目追加モーダル：支払日の位置ずれ修正 */
-#paymentDialog .bulk-payment-row .bulk-row-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-}
-
-#paymentDialog .bulk-payment-row .field {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  width: 100%;
-  margin: 0 0 12px;
-  box-sizing: border-box;
-}
-
-#paymentDialog .bulk-payment-row .field input,
-#paymentDialog .bulk-payment-row .field select,
-#paymentDialog .bulk-payment-row .field textarea {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  height: 44px;
-  margin: 6px 0 0;
-  box-sizing: border-box;
-}
-
-#paymentDialog .bulk-payment-row input[type="date"] {
-  display: block;
-  min-width: 0;
-  padding: 10px 6px;
-  font-size: 14px;
-  appearance: none;
-  -webkit-appearance: none;
-}
-
-@media (max-width: 420px) {
-  #paymentDialog .bulk-payment-row .bulk-row-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
